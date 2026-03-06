@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -8,11 +9,14 @@ import { VerifiedUser } from './storage/entities/verified-user.entity';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
     ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'sqljs',
-      location: 'data/verified.sqlite',
+      location: path.join(process.cwd(), 'data', 'verified.sqlite'),
       autoSave: true,
       entities: [VerifiedUser, PendingUidRequest],
       synchronize: true,

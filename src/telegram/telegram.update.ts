@@ -26,6 +26,10 @@ export class TelegramUpdate {
     private readonly pendingUid: PendingUidRequestService,
   ) {}
 
+  private getAffiliateLink(): string {
+    return this.config.get<string>('AFFILIATE_LINK')?.trim() ?? '';
+  }
+
   @Start()
   async start(@Ctx() ctx: Context) {
     try {
@@ -80,21 +84,26 @@ export class TelegramUpdate {
   }
 
   private async sendSignUpBonus(ctx: Context) {
-    const affiliateLink = this.config.get<string>('AFFILIATE_LINK') ?? '';
-    await ctx.reply(
+    const link = this.getAffiliateLink();
+    const text =
       'Sign up with our referral link to get your bonus and join the community:\n\n' +
-        'Your account must have net assets of at least $100 to qualify for the VIP group.',
-      Markup.inlineKeyboard([
-        [Markup.button.url('Sign up and get bonus', affiliateLink)],
-      ]),
+      (link ? `${link}\n\n` : '') +
+      'Your account must have net assets of at least $100 to qualify for the VIP group.';
+    await ctx.reply(
+      text,
+      link
+        ? Markup.inlineKeyboard([[Markup.button.url('Sign up and get bonus', link)]])
+        : undefined,
     );
   }
 
   @Help()
   async help(@Ctx() ctx: Context) {
-    await ctx.reply(
-      'Need help? Send your Bybit UID to check if you qualify for the VIP group. Your account must be under our affiliate link with net assets of at least $100.',
-    );
+    const link = this.getAffiliateLink();
+    const text =
+      'Need help? Send your Bybit UID to check if you qualify for the VIP group. Your account must be under our affiliate link with net assets of at least $100.' +
+      (link ? `\n\nReferral link: ${link}` : '');
+    await ctx.reply(text);
   }
 
   @On('text')
@@ -129,13 +138,15 @@ export class TelegramUpdate {
     }
 
     switch (result.status) {
-      case 'NOT_REGISTERED':
+      case 'NOT_REGISTERED': {
+        const link = this.getAffiliateLink();
         await ctx.reply(
           `The UID you sent is not associated with me.\n` +
-            `Please register using my referral link: ${this.config.get('AFFILIATE_LINK')}\n\n` +
+            (link ? `Please register using my referral link:\n\n${link}\n\n` : 'Please register using our referral link.\n\n') +
             `The account must have net assets of at least $100.00 before you can use the BOT to join the group.`,
         );
         return;
+      }
 
       case 'INSUFFICIENT_FUNDS':
         await ctx.reply(

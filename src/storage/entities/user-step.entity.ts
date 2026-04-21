@@ -8,6 +8,7 @@ import {
 /** User progress steps for reminder targeting. */
 export type Step =
   | 'start'
+  | 'awaiting_account_choice'
   | 'awaiting_uid'
   | 'after_signup'
   | 'not_registered'

@@ -44,15 +44,11 @@ export class BybitService {
           'X-BAPI-SIGN': signature,
         },
       });
-      console.log('[Bybit]', endpoint, '| status:', status, '| response:', JSON.stringify(data));
       if (data.retCode !== 0 && data.retCode !== undefined) {
         throw new Error(data.retMsg ?? 'Bybit API error');
       }
       return data.result as T;
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        console.log('[Bybit]', endpoint, '| status:', err.response.status, '| response:', JSON.stringify(err.response.data));
-      }
       throw err;
     }
   }
@@ -127,6 +123,21 @@ export class BybitService {
     } catch {
       return null;
     }
+  }
+
+  /** Direct proxy to GET /v5/affiliate/aff-user-list. */
+  async getAffiliateUserList(params?: {
+    size?: number;
+    needDeposit?: boolean;
+    cursor?: string;
+  }): Promise<BybitAffUserListResult> {
+    const search = new URLSearchParams();
+    search.set('size', String(params?.size ?? 100));
+    search.set('needDeposit', String(params?.needDeposit ?? true));
+    if (params?.cursor) search.set('cursor', params.cursor);
+
+    const query = search.toString();
+    return this.request<BybitAffUserListResult>(this.affUserListEndpoint, query);
   }
 
   getUserDepositAmount(user: BybitAffUserListItem): number {

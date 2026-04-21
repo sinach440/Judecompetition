@@ -32,9 +32,16 @@ export class VerificationService {
       return { status: 'APPROVED', alreadyVerified: true };
     }
 
-    const info = await this.bybit.getAffiliateCustomerInfo(normalized);
+    // Step 1: must be under this affiliate first.
+    const isUnderAffiliate = await this.bybit.isUserUnderAffiliate(normalized);
+    if (!isUnderAffiliate) {
+      return { status: 'NOT_REGISTERED' };
+    }
 
+    // Step 2: if under affiliate, enforce minimum wallet tier (>= 2, i.e. >= $100).
+    const info = await this.bybit.getAffiliateCustomerInfo(normalized);
     if (!info) {
+      // Defensive fallback: if profile lookup fails after affiliate check, treat as not registered for now.
       return { status: 'NOT_REGISTERED' };
     }
 

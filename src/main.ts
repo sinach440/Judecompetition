@@ -3,6 +3,7 @@ import * as path from 'path';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { getBotToken } from 'nestjs-telegraf';
 import type { Telegraf } from 'telegraf';
 
@@ -15,6 +16,14 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const nodeEnv = config.get<string>('NODE_ENV', 'development');
   const isProduction = nodeEnv === 'production';
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Bybit Affiliate Bot API')
+    .setDescription('Webhook and health endpoints for the Telegram challenge bot')
+    .setVersion('1.0')
+    .build();
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('docs', app, swaggerDocument);
 
   const bot = app.get<Telegraf>(getBotToken());
 

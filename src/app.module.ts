@@ -4,6 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TelegramModule } from './telegram/telegram.module';
+import { VerificationModule } from './verification/verification.module';
+import { VerificationController } from './verification/verification.controller';
 import { PendingUidRequest } from './storage/entities/pending-uid-request.entity';
 import { UserStep } from './storage/entities/user-step.entity';
 import { VerifiedUser } from './storage/entities/verified-user.entity';
@@ -22,7 +24,9 @@ import { VerifiedUser } from './storage/entities/verified-user.entity';
       entities: [VerifiedUser, PendingUidRequest, UserStep],
       synchronize: true,
     }),
+    VerificationModule,
     TelegramModule,
   ],
+  controllers: [VerificationController],
 })
 export class AppModule {}

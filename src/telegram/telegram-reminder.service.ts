@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { getBotToken } from 'nestjs-telegraf';
 import type { Telegraf } from 'telegraf';
+import { boldHtml, escapeTelegramHtml } from '../common';
 import { UserStepService } from '../storage/user-step.service';
 import type { Step } from '../storage/entities/user-step.entity';
 
@@ -18,26 +19,46 @@ export class TelegramReminderService {
     const affiliateLink = this.config.get<string>('AFFILIATE_LINK')?.trim() ?? '';
     switch (step) {
       case 'start':
+        return `${boldHtml('🟢 Continue')}\n\nTap Start on the welcome message to continue.`;
+      case 'awaiting_account_choice':
         return (
-          "You have not chosen an option yet. Tap 'Already A Bybit User' to submit your UID, or 'Sign Up & Get Bonus' to get the referral link."
+          `${boldHtml('🟢 To begin')}\n\n` +
+          'Do you already have a Bybit account?\n\n' +
+          "Tap ✅ Yes or ❌ No on the bot's last message."
         );
       case 'awaiting_uid':
-        return "You have not submitted your Bybit UID yet. Send your UID here to check if you qualify for the VIP group (account must have net assets of at least $100).";
+        return (
+          `${boldHtml('🟡 BYBIT UID')}\n\n` +
+          "You haven't sent your Bybit UID yet.\n\n" +
+          'Please Enter your Bybit UID below so we can verify your eligibility for the challenge.'
+        );
       case 'after_signup':
-        return "You got the sign-up link. After signing up, send your Bybit UID here to get access to the VIP group (account must have at least $100).";
+        return (
+          `${boldHtml('🔵 Account setup')}\n\n` +
+          'Finish creating your account, then tap Done on the setup message.\n\n' +
+          'After that, send your Bybit UID here.'
+        );
       case 'not_registered':
         return (
-          "Your UID was not under our affiliate. Please sign up with our referral link first, then send your UID here again." +
-          (affiliateLink ? `\n\n${affiliateLink}` : '')
+          `${boldHtml('❌ IF UID IS NOT REGISTERED UNDER OUR LINK')}\n\n` +
+          "This usually means the account was not created using the required link, so we're unable to track your performance." +
+          (affiliateLink ? `\n\n👉 ${escapeTelegramHtml(affiliateLink)}` : '')
         );
       case 'insufficient_funds':
-        return "Your account needs at least $100 to qualify. Top up and send your UID again when ready.";
+        return (
+          `${boldHtml('🟠 Minimum balance')}\n\n` +
+          "We're still unable to complete verification for this UID.\n\n" +
+          'Top up if needed, then send your UID again.'
+        );
       default:
-        return "Continue your sign-up: send your Bybit UID here to check if you qualify for the VIP group (account must have at least $100).";
+        return (
+          `${boldHtml('🟡 BYBIT UID')}\n\n` +
+          'Please Enter your Bybit UID below so we can verify your eligibility for the challenge.'
+        );
     }
   }
 
-  private readonly REMINDER_HEADER = '🔔 Reminder\n\n';
+  private readonly reminderHeader = () => `${boldHtml('🔔 Reminder')}\n\n`;
 
   /** Every 15 minutes, send step-based reminders to users stuck 24h+ at a step. */
   @Cron('*/15 * * * *')
@@ -45,8 +66,10 @@ export class TelegramReminderService {
     const due = await this.userStep.findDueForReminder();
     for (const row of due) {
       try {
-        const message = this.REMINDER_HEADER + this.getMessageForStep(row.step as Step);
-        await this.bot.telegram.sendMessage(row.telegramId, message);
+        const message = this.reminderHeader() + this.getMessageForStep(row.step as Step);
+        await this.bot.telegram.sendMessage(row.telegramId, message, {
+          parse_mode: 'HTML',
+        });
         await this.userStep.markReminderSent(row.id);
       } catch (err) {
         console.error('[Reminder] Failed to send to', row.telegramId, err);

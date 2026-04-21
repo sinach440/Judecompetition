@@ -283,7 +283,6 @@ export class TelegramUpdate {
         if (telegramIdApproved) await this.userStep.setStep(String(telegramIdApproved), 'verified');
         const formLink = this.getChallengeFormLink();
         const groupLink = this.config.get<string>('VIP_GROUP_LINK')?.trim() ?? '';
-        const groupLine = groupLink ? escapeTelegramHtml(groupLink) : '[Insert Link]';
         const approvedText =
           `${boldHtml("🟢 YOU'RE IN!")}\n\n` +
           "Your UID has been verified and you're now eligible for the challenge.\n\n" +
@@ -291,9 +290,14 @@ export class TelegramUpdate {
           `${boldHtml('Fill the form below')}\n\n` +
           '👇👇\n\n' +
           `${escapeTelegramHtml(formLink)}\n\n` +
-          `${boldHtml('👉 Join the official Challenge group:')}\n\n` +
-          groupLine;
-        await this.htmlReply(ctx, approvedText);
+          `${boldHtml('👉 Join the official Challenge group:')}` +
+          (groupLink ? '\n\nTap the button below to open the group.' : '\n\n[Insert Link]');
+        const approvedExtra = groupLink
+          ? Markup.inlineKeyboard([
+              [Markup.button.url('Join official challenge group', groupLink)],
+            ])
+          : undefined;
+        await this.htmlReply(ctx, approvedText, approvedExtra);
         await this.verifiedUser.markVerified(uid, String(ctx.from?.id ?? ''));
         return;
     }

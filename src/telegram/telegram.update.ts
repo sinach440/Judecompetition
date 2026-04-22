@@ -231,6 +231,17 @@ export class TelegramUpdate {
     await this.htmlReply(ctx, text);
   }
 
+  @On('message')
+  async logGroupChatId(@Ctx() ctx: Context) {
+    const chat = ctx.chat;
+    if (!chat) return;
+    if (chat.type !== 'group' && chat.type !== 'supergroup') return;
+
+    console.log(
+      `[telegram] detected group chat id: ${chat.id} (title: ${'title' in chat ? chat.title : 'n/a'})`,
+    );
+  }
+
   @On('text')
   async onText(@Ctx() ctx: Context) {
     const chatId = ctx.chat?.id;

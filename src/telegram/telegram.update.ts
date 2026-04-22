@@ -341,8 +341,8 @@ export class TelegramUpdate {
           `${boldHtml('Fill the form below')}\n\n` +
           '👇👇\n\n' +
           `${escapeTelegramHtml(formLink)}\n\n` +
-          `${boldHtml('Join the private challenge group:')}\n\n` +
-          'Tap the button below to generate your private invite link.';
+          // `${boldHtml('Join the private challenge group:')}\n\n` +
+          `${boldHtml('TAP THE BUTTON BELOW. 👇')}`;
         const approvedExtra = Markup.inlineKeyboard([
           [Markup.button.callback('Get private group invite', ACTION_GET_GROUP_INVITE)],
         ]);

@@ -231,17 +231,6 @@ export class TelegramUpdate {
     await this.htmlReply(ctx, text);
   }
 
-  @On('message')
-  async logGroupChatId(@Ctx() ctx: Context) {
-    const chat = ctx.chat;
-    if (!chat) return;
-    if (chat.type !== 'group' && chat.type !== 'supergroup') return;
-
-    console.log(
-      `[telegram] detected group chat id: ${chat.id} (title: ${'title' in chat ? chat.title : 'n/a'})`,
-    );
-  }
-
   @On('text')
   async onText(@Ctx() ctx: Context) {
     const chatId = ctx.chat?.id;
@@ -264,6 +253,10 @@ export class TelegramUpdate {
       return;
     }
 
+    console.log(
+      `[telegram] UID received from user ${ctx.from?.id ?? 'unknown'} in chat ${chatId}: ${uid}`,
+    );
+
     await this.htmlReply(
       ctx,
       `${boldHtml('🟢 PROCESSING...')}\n\n` +
@@ -275,6 +268,10 @@ export class TelegramUpdate {
     let result;
     try {
       result = await this.verification.verify(uid);
+      console.log(
+        `[telegram] verification status for UID ${uid}: ${result.status}` +
+          (result.status === 'APPROVED' ? ` (alreadyVerified=${result.alreadyVerified})` : ''),
+      );
     } catch (err) {
       console.error('Verification error for UID', uid, err);
       await this.htmlReply(
@@ -359,6 +356,19 @@ export class TelegramUpdate {
         ]);
         await this.htmlReply(ctx, approvedText, approvedExtra);
         await this.verifiedUser.markVerified(uid, String(ctx.from?.id ?? ''));
+        return;
+
+      default:
+        console.error(
+          `[telegram] Unexpected verification status for UID ${uid}: ${String(result.status)}`,
+          result,
+        );
+        await this.htmlReply(
+          ctx,
+          `${boldHtml('⚠️ Verification issue')}\n\n` +
+            "We received an unexpected verification result.\n\n" +
+            'Please try again in a moment.',
+        );
         return;
     }
   }

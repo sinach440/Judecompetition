@@ -19,6 +19,15 @@ export class TelegramWebhookController {
   @Post('telegram-webhook')
   handleWebhook(@Req() req: Request, @Res() res: Response): void {
     const webhookPath = this.config.get<string>('WEBHOOK_PATH', '/telegram-webhook');
+    const update = req.body as
+      | { update_id?: number; message?: { chat?: { id?: number | string }; text?: string }; callback_query?: { data?: string } }
+      | undefined;
+    console.log(
+      `[telegram webhook] incoming update_id=${update?.update_id ?? 'n/a'} ` +
+        `chat_id=${update?.message?.chat?.id ?? 'n/a'} ` +
+        `text=${update?.message?.text ?? 'n/a'} ` +
+        `callback=${update?.callback_query?.data ?? 'n/a'}`,
+    );
     // Telegraf's webhookFilter compares req.url to this path; ensure it matches
     req.url = webhookPath;
     const callback = this.bot.webhookCallback(webhookPath);

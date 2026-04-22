@@ -19,6 +19,7 @@ const ACTION_BEGIN = 'challenge_begin';
 const ACTION_ALREADY_BYBIT = 'already_bybit_user';
 const ACTION_SIGN_UP_BONUS = 'sign_up_bonus';
 const ACTION_SIGNUP_DONE = 'signup_account_done';
+const ACTION_GET_GROUP_INVITE = 'get_group_invite';
 
 @Update()
 export class TelegramUpdate {
@@ -43,6 +44,17 @@ export class TelegramUpdate {
   private getTransferGuideUrl(): string {
     const raw = this.config.get<string>('TRANSFER_GUIDE_URL')?.trim();
     return raw || 'https://drive.google.com/file/d/1zdoYEavv1TYPyCDFJjefKPzOCYndIlGq/view?usp=sharing';
+  }
+
+  /**
+   * Private VIP group chat id where per-user invite links are generated.
+   * Supports numeric ids (e.g. -100...) and string usernames.
+   */
+  private getVipGroupChatId(): string | number | undefined {
+    const raw = this.config.get<string>('VIP_GROUP_CHAT_ID')?.trim();
+    if (!raw) return undefined;
+    if (/^-?\d+$/.test(raw)) return Number(raw);
+    return raw;
   }
 
   private htmlReply(
@@ -129,6 +141,46 @@ export class TelegramUpdate {
       `${boldHtml('🟡 BYBIT UID')}\n\n` +
         'Please Enter your Bybit UID below so we can verify your eligibility for the challenge.',
     );
+  }
+
+  @Action(ACTION_GET_GROUP_INVITE)
+  async onGetGroupInvite(@Ctx() ctx: Context) {
+    await ctx.answerCbQuery();
+    const chatId = this.getVipGroupChatId();
+    const userId = ctx.from?.id;
+
+    if (!chatId || !userId) {
+      await this.htmlReply(
+        ctx,
+        `${boldHtml('⚠️ Invite unavailable')}\n\n` +
+          'The private group invite is not configured yet.\n\n' +
+          'Please contact support.',
+      );
+      return;
+    }
+
+    try {
+      const invite = await ctx.telegram.createChatInviteLink(chatId, {
+        member_limit: 1,
+        expire_date: Math.floor(Date.now() / 1000) + 30 * 60,
+        name: `uid:${userId}`,
+      });
+
+      await this.htmlReply(
+        ctx,
+        `${boldHtml('🔐 Your private invite link')}\n\n` +
+          'This link is single-use and expires in 30 minutes.\n\n' +
+          `${escapeTelegramHtml(invite.invite_link)}`,
+      );
+    } catch (err) {
+      console.error('Failed to generate private group invite link', err);
+      await this.htmlReply(
+        ctx,
+        `${boldHtml('⚠️ Invite unavailable')}\n\n` +
+          "We couldn't generate your private invite link right now.\n\n" +
+          'Please try again in a moment.',
+      );
+    }
   }
 
   @Command('signup')
@@ -282,7 +334,6 @@ export class TelegramUpdate {
         const telegramIdApproved = ctx.from?.id;
         if (telegramIdApproved) await this.userStep.setStep(String(telegramIdApproved), 'verified');
         const formLink = this.getChallengeFormLink();
-        const groupLink = this.config.get<string>('VIP_GROUP_LINK')?.trim() ?? '';
         const approvedText =
           `${boldHtml("🟢 YOU'RE IN!")}\n\n` +
           "Your UID has been verified and you're now eligible for the challenge.\n\n" +
@@ -290,13 +341,11 @@ export class TelegramUpdate {
           `${boldHtml('Fill the form below')}\n\n` +
           '👇👇\n\n' +
           `${escapeTelegramHtml(formLink)}\n\n` +
-          `${boldHtml('👉 Join the official Challenge group:')}` +
-          (groupLink ? '\n\nTap the button below to open the group.' : '\n\n[Insert Link]');
-        const approvedExtra = groupLink
-          ? Markup.inlineKeyboard([
-              [Markup.button.url('Join official challenge group', groupLink)],
-            ])
-          : undefined;
+          `${boldHtml('Join the private challenge group:')}\n\n` +
+          'Tap the button below to generate your private invite link.';
+        const approvedExtra = Markup.inlineKeyboard([
+          [Markup.button.callback('Get private group invite', ACTION_GET_GROUP_INVITE)],
+        ]);
         await this.htmlReply(ctx, approvedText, approvedExtra);
         await this.verifiedUser.markVerified(uid, String(ctx.from?.id ?? ''));
         return;

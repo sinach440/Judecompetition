@@ -162,14 +162,13 @@ export class TelegramUpdate {
     try {
       const invite = await ctx.telegram.createChatInviteLink(chatId, {
         member_limit: 1,
-        expire_date: Math.floor(Date.now() / 1000) + 30 * 60,
         name: `uid:${userId}`,
       });
 
       await this.htmlReply(
         ctx,
         `${boldHtml('🔐 Your private invite link')}\n\n` +
-          'This link is single-use and expires in 30 minutes.\n\n' +
+          'This link is for one join only. Open it on the device you use for Telegram, and do not share it.\n\n' +
           `${escapeTelegramHtml(invite.invite_link)}`,
       );
     } catch (err) {

@@ -22,6 +22,9 @@ const ACTION_SIGN_UP_BONUS = 'sign_up_bonus';
 const ACTION_SIGNUP_DONE = 'signup_account_done';
 const ACTION_GET_GROUP_INVITE = 'get_group_invite';
 
+/** Explicit invite TTL (seconds) so Telegram does not apply a shorter implicit default. */
+const GROUP_INVITE_EXPIRE_SEC = 86400; // 24h
+
 @Update()
 export class TelegramUpdate {
   constructor(
@@ -178,6 +181,7 @@ export class TelegramUpdate {
 
       const invite = await ctx.telegram.createChatInviteLink(chatId, {
         member_limit: 1,
+        expire_date: Math.floor(Date.now() / 1000) + GROUP_INVITE_EXPIRE_SEC,
         name: `uid:${userId}`,
       });
       await this.userInviteLink.setLastInviteLink(telegramId, invite.invite_link);
@@ -185,7 +189,7 @@ export class TelegramUpdate {
       await this.htmlReply(
         ctx,
         `${boldHtml('🔐 Your private invite link')}\n\n` +
-          'This link is for one join only. Open it on the device you use for Telegram, and do not share it.\n\n' +
+          'This link is for one join only, and it expires in 24 hours. Open it on the device you use for Telegram, and do not share it.\n\n' +
           `${escapeTelegramHtml(invite.invite_link)}`,
       );
     } catch (err) {

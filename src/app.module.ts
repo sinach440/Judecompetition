@@ -8,6 +8,7 @@ import { VerificationController } from './verification/verification.controller';
 import { PendingUidRequest } from './storage/entities/pending-uid-request.entity';
 import { UserInviteLink } from './storage/entities/user-invite-link.entity';
 import { UserStep } from './storage/entities/user-step.entity';
+import { UserTelegramChat } from './storage/entities/user-telegram-chat.entity';
 import { VerifiedUser } from './storage/entities/verified-user.entity';
 
 @Module({
@@ -28,7 +29,13 @@ import { VerifiedUser } from './storage/entities/verified-user.entity';
         return {
           type: 'postgres' as const,
           url: databaseUrl,
-          entities: [VerifiedUser, PendingUidRequest, UserStep, UserInviteLink],
+          entities: [
+            VerifiedUser,
+            PendingUidRequest,
+            UserStep,
+            UserInviteLink,
+            UserTelegramChat,
+          ],
           migrations: ['dist/database/migrations/*.js'],
           migrationsRun: true,
           synchronize: false,

@@ -28,7 +28,9 @@ import { VerifiedUser } from './storage/entities/verified-user.entity';
           type: 'postgres' as const,
           url: databaseUrl,
           entities: [VerifiedUser, PendingUidRequest, UserStep],
-          synchronize: true,
+          migrations: ['dist/database/migrations/*.js'],
+          migrationsRun: true,
+          synchronize: false,
         };
       },
     }),

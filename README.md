@@ -60,6 +60,16 @@ Edit `.env`:
 
 The app uses PostgreSQL via `DATABASE_URL` and connects with TypeORM. Ensure your database is reachable from your runtime environment.
 
+Migrations are enabled, and the app runs pending migrations automatically on startup (`migrationsRun: true`).
+
+For manual migration commands:
+
+```bash
+pnpm run migration:run
+pnpm run migration:revert
+pnpm run migration:generate
+```
+
 ---
 
 ## Running the bot
@@ -115,7 +125,7 @@ Telegram will send updates to `https://<SERVER_URL><WEBHOOK_PATH>` (e.g. `https:
 ## Project structure (overview)
 
 - `src/main.ts` — Bootstrap, webhook vs polling.
-- `src/app.module.ts` — Config, TypeORM (PostgreSQL), Schedule, Telegram module.
+- `src/app.module.ts` — Config, TypeORM (PostgreSQL + migrations), Schedule, Telegram module.
 - `src/telegram/` — Bot handlers (`telegram.update.ts`), webhook controller, step-based reminder cron.
 - `src/verification/` — Bybit UID verification (affiliate + balance).
 - `src/storage/` — Verified users (one-time VIP link), user steps (for reminders), pending UID requests (legacy).

@@ -13,6 +13,7 @@ import type { Context } from 'telegraf';
 import { boldHtml, escapeTelegramHtml } from '../common';
 import { VerificationService } from '../verification/verification.service';
 import { UserStepService } from '../storage/user-step.service';
+import { UserInviteLinkService } from '../storage/user-invite-link.service';
 import { VerifiedUserService } from '../storage/verified-user.service';
 
 const ACTION_BEGIN = 'challenge_begin';
@@ -28,6 +29,7 @@ export class TelegramUpdate {
     private readonly verification: VerificationService,
     private readonly verifiedUser: VerifiedUserService,
     private readonly userStep: UserStepService,
+    private readonly userInviteLink: UserInviteLinkService,
   ) {}
 
   private getAffiliateLink(): string {
@@ -160,10 +162,25 @@ export class TelegramUpdate {
     }
 
     try {
+      const telegramId = String(userId);
+      const lastInvite = await this.userInviteLink.getLastInviteLink(telegramId);
+      if (lastInvite) {
+        try {
+          await ctx.telegram.revokeChatInviteLink(chatId, lastInvite);
+        } catch (revokeErr) {
+          // Best effort cleanup: old links may already be used/revoked.
+          console.warn(
+            `[telegram] failed to revoke previous invite link for user ${telegramId}`,
+            revokeErr,
+          );
+        }
+      }
+
       const invite = await ctx.telegram.createChatInviteLink(chatId, {
         member_limit: 1,
         name: `uid:${userId}`,
       });
+      await this.userInviteLink.setLastInviteLink(telegramId, invite.invite_link);
 
       await this.htmlReply(
         ctx,

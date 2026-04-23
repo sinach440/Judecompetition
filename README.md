@@ -62,6 +62,8 @@ The app uses PostgreSQL via `DATABASE_URL` and connects with TypeORM. Ensure you
 
 Migrations are enabled, and the app runs pending migrations automatically on startup (`migrationsRun: true`).
 
+Invite hygiene is enabled: when a user requests a new private group invite, the bot revokes that user's previously issued invite link (if any) before minting a new one.
+
 For manual migration commands:
 
 ```bash

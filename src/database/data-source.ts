@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { PendingUidRequest } from '../storage/entities/pending-uid-request.entity';
+import { UserInviteLink } from '../storage/entities/user-invite-link.entity';
 import { UserStep } from '../storage/entities/user-step.entity';
 import { VerifiedUser } from '../storage/entities/verified-user.entity';
 
@@ -13,7 +14,7 @@ if (!databaseUrl) {
 export default new DataSource({
   type: 'postgres',
   url: databaseUrl,
-  entities: [VerifiedUser, PendingUidRequest, UserStep],
+  entities: [VerifiedUser, PendingUidRequest, UserStep, UserInviteLink],
   migrations: ['src/database/migrations/*.ts'],
   synchronize: false,
 });

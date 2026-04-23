@@ -6,6 +6,7 @@ import { TelegramModule } from './telegram/telegram.module';
 import { VerificationModule } from './verification/verification.module';
 import { VerificationController } from './verification/verification.controller';
 import { PendingUidRequest } from './storage/entities/pending-uid-request.entity';
+import { UserInviteLink } from './storage/entities/user-invite-link.entity';
 import { UserStep } from './storage/entities/user-step.entity';
 import { VerifiedUser } from './storage/entities/verified-user.entity';
 
@@ -27,7 +28,7 @@ import { VerifiedUser } from './storage/entities/verified-user.entity';
         return {
           type: 'postgres' as const,
           url: databaseUrl,
-          entities: [VerifiedUser, PendingUidRequest, UserStep],
+          entities: [VerifiedUser, PendingUidRequest, UserStep, UserInviteLink],
           migrations: ['dist/database/migrations/*.js'],
           migrationsRun: true,
           synchronize: false,

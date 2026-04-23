@@ -1,6 +1,6 @@
 # Bybit Affiliate Telegram Bot
 
-A Telegram bot that verifies users by Bybit UID (affiliate + balance) and sends a one-time VIP group invite. Built with NestJS, Telegraf, and TypeORM (sql.js).
+A Telegram bot that verifies users by Bybit UID (affiliate + balance) and sends a one-time VIP group invite. Built with NestJS, Telegraf, and TypeORM (PostgreSQL).
 
 ---
 
@@ -48,6 +48,7 @@ Edit `.env`:
 | `NODE_ENV` | `development` (polling) or `production` (webhook) |
 | `SERVER_URL` | Public base URL in production (e.g. `https://your-app.com`) |
 | `WEBHOOK_PATH` | Webhook path (default `/telegram-webhook`) |
+| `DATABASE_URL` | PostgreSQL connection URL (required) |
 | `TELEGRAM_BOT_TOKEN` | Token from BotFather |
 | `BYBIT_API_KEY` | Bybit API key (affiliate) |
 | `BYBIT_SECRET` | Bybit API secret |
@@ -55,9 +56,9 @@ Edit `.env`:
 | `AFFILIATE_LINK` | Your Bybit referral/affiliate link |
 | `VIP_GROUP_LINK` | Telegram invite link for the VIP group |
 
-### 3. Data directory
+### 3. Database
 
-The app stores the SQLite DB in `data/verified.sqlite`. The `data/` folder is created automatically on first run. For Docker or read-only filesystems, ensure the process can write to the working directory (or adjust the path in `app.module.ts`).
+The app uses PostgreSQL via `DATABASE_URL` and connects with TypeORM. Ensure your database is reachable from your runtime environment.
 
 ---
 
@@ -113,8 +114,8 @@ Telegram will send updates to `https://<SERVER_URL><WEBHOOK_PATH>` (e.g. `https:
 
 ## Project structure (overview)
 
-- `src/main.ts` — Bootstrap, webhook vs polling, `data/` creation.
-- `src/app.module.ts` — Config, TypeORM (sql.js), Schedule, Telegram module.
+- `src/main.ts` — Bootstrap, webhook vs polling.
+- `src/app.module.ts` — Config, TypeORM (PostgreSQL), Schedule, Telegram module.
 - `src/telegram/` — Bot handlers (`telegram.update.ts`), webhook controller, step-based reminder cron.
 - `src/verification/` — Bybit UID verification (affiliate + balance).
 - `src/storage/` — Verified users (one-time VIP link), user steps (for reminders), pending UID requests (legacy).

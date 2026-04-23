@@ -1,6 +1,5 @@
-import * as path from 'path';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TelegramModule } from './telegram/telegram.module';
@@ -17,12 +16,21 @@ import { VerifiedUser } from './storage/entities/verified-user.entity';
       envFilePath: '.env',
     }),
     ScheduleModule.forRoot(),
-    TypeOrmModule.forRoot({
-      type: 'sqljs',
-      location: path.join(process.cwd(), 'data', 'verified.sqlite'),
-      autoSave: true,
-      entities: [VerifiedUser, PendingUidRequest, UserStep],
-      synchronize: true,
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const databaseUrl = config.get<string>('DATABASE_URL')?.trim();
+        if (!databaseUrl) {
+          throw new Error('DATABASE_URL is required');
+        }
+
+        return {
+          type: 'postgres' as const,
+          url: databaseUrl,
+          entities: [VerifiedUser, PendingUidRequest, UserStep],
+          synchronize: true,
+        };
+      },
     }),
     VerificationModule,
     TelegramModule,

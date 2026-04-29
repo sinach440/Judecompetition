@@ -20,16 +20,17 @@ import { TelegramWebhookController } from './telegram-webhook.controller';
         // Explicitly include this module so /start and other handlers are registered
         include: [TelegramModule],
         middlewares: [
+          /** Bot only interacts in private DMs — ignore groups, supergroups, channels. */
+          async (_ctx, next) => {
+            if (_ctx.chat?.type !== 'private') return;
+            return next();
+          },
           async (ctx, next) => {
             const from = ctx.from?.id;
-            const chat = ctx.chat;
-            if (
-              from != null &&
-              chat?.id != null &&
-              chat.type === 'private'
-            ) {
+            const chatId = ctx.chat?.id;
+            if (from != null && chatId != null) {
               try {
-                await userTelegramChats.upsertChatId(String(from), String(chat.id));
+                await userTelegramChats.upsertChatId(String(from), String(chatId));
               } catch (e) {
                 console.error('[telegram] failed to persist chat_id', e);
               }
